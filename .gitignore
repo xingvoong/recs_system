@@ -10,3 +10,6 @@ data/*.zip
 
 # saved model weights
 data/*.npy
+
+# generated plots — run phase_1/visualize.py to regenerate
+data/*.png

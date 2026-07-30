@@ -140,7 +140,7 @@ WALS wins for matrix factorization. SGD wins when you need flexibility (e.g., ad
 
 After training, items cluster by genre in embedding space — even though WALS never saw genre labels. It learned this structure purely from co-watching patterns.
 
-![Movie embeddings PCA](data/embeddings_pca_grid.png)
+> Run `python phase_1/visualize.py` to generate the genre cluster plots.
 
 A user who rates a lot of action movies will have a query embedding that lands near the Action cluster — pulling those items into candidates.
 
@@ -273,7 +273,7 @@ The 4.47% density is the central challenge. Every algorithm in this project exis
 
 PCA compresses each movie's 32-dimensional embedding down to 2D so we can plot it. Two movies close together = their viewers heavily overlap. Two movies far apart = different audiences.
 
-![Genre clusters in embedding space](data/embeddings_pca_grid.png)
+> Run `python phase_1/visualize.py` to generate the genre cluster plots.
 
 ---
 
