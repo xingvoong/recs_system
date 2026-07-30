@@ -1,0 +1,12 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+
+# raw data — too large for git
+data/ml-1m/
+data/*.zip
+
+# saved model weights
+data/*.npy
