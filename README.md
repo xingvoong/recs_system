@@ -302,12 +302,74 @@ For both Toy Story and L.A. Confidential, dot product surfaced American Beauty i
 
 ---
 
-### Phase 2 — Candidate Generation
-- Content-based generator: genre/tag feature vectors + dot product scoring
-- Collaborative filtering generator: WALS embeddings + FAISS ANN retrieval
-- Pool and deduplicate candidates from both
+### Phase 2 — Candidate Generation ✓
 
-**Course modules covered:** 3, 4, 7
+**What we built:**
+
+| File | What it does |
+|---|---|
+| `phase_2/content_based.py` | Genre vectors + weighted user profile + dot product scoring |
+| `phase_2/collaborative.py` | WALS embeddings + nearest-neighbor retrieval |
+| `phase_2/pool.py` | Merges both generators, deduplicates |
+
+---
+
+#### How Content-Based Works
+
+Each movie is a binary genre vector (18 dims, derived from data). The user profile is a weighted average of all genre vectors for movies they rated — higher-rated movies pull harder.
+
+```
+User rates:   Toy Story ★★★★★ + Lion King ★★★★ + Schindler's List ★★★★★
+                    ↓ weighted average
+User profile: [Animation=0.64, Children's=0.64, Comedy=0.64, Drama=0.36, ...]
+                    ↓ dot product with every unseen movie
+Candidates:   movies whose genre vectors align with the profile
+```
+
+Score every unseen movie by dot product. Return top 100.
+
+#### How Collaborative Filtering Works
+
+Uses the WALS embeddings from Phase 1. Each user has a 32-dim embedding that captures their position in "taste space." Find the movies whose embeddings sit closest to the user's embedding — those are the movies that users with similar behavior patterns tended to watch.
+
+```
+User embedding → nearest neighbor search over item embeddings
+→ movies watched by people who watch what you watch
+→ filter out already-seen → top 100 candidates
+```
+
+At production scale (millions of items) this uses FAISS or ScaNN for approximate nearest neighbor search. At 3,706 movies sklearn brute-force runs in under 1ms.
+
+---
+
+#### Candidate Pool Stats
+
+| | |
+|---|---|
+| Content-based candidates per user | 100 |
+| Collaborative candidates per user | 100 |
+| Combined pool after deduplication | ~170–190 |
+| Overlap between generators | ~10–30 movies |
+
+---
+
+#### Key Findings
+
+**1. The two generators recommend completely different movies.**
+Content-based for user 1 returned only animated children's films — locked to what they explicitly rated. Collaborative returned Star Wars, Raiders of the Lost Ark, Shawshank Redemption — movies user 1 never rated but users with similar animation taste also loved. Neither generator alone is enough.
+
+**2. Overlap is a strong signal.**
+The 10–30 movies that appear in both candidate lists are the most confident recommendations. They satisfy two independent criteria: they match the user's genre fingerprint AND they match the co-watching patterns of similar users.
+
+**3. Content-based has no serendipity.**
+If a user only rated one genre, content-based only returns that genre. It cannot discover what users don't already know they like. Collaborative has no such limitation — it routes around genre entirely.
+
+**4. Collaborative has no cold-start.**
+A new movie with zero ratings has no WALS embedding, so collaborative filtering can't surface it. Content-based can recommend it the moment you know its genre. Each generator covers the other's blind spot.
+
+---
+
+**Course modules covered:** Content-Based Filtering, Collaborative Filtering, Retrieval
 
 ---
 
