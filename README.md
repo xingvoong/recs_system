@@ -540,10 +540,99 @@ Freshness, diversity, and content filters are explicit rules — not learned. Th
 
 ---
 
-### Phase 5 — Serve It
-- FastAPI endpoint wrapping the full pipeline
-- `/recommend` and `/similar` routes
-- Pipeline metadata in response (candidate counts per stage)
+### Phase 5 — Serve It ✓
+
+Wraps the full four-stage pipeline in a FastAPI server. Each request runs candidate generation → scoring → re-ranking and returns a ranked list with pipeline metadata.
+
+**What we built:**
+
+| File | What it does |
+|---|---|
+| `phase_5/state.py` | Loads all models and data once at startup, holds them in memory |
+| `phase_5/api.py` | Two endpoints: `/recommend` and `/similar` |
+
+---
+
+#### How to Run
+
+**1. Train the scorer** (skip if `data/scorer.pkl` already exists)
+
+```bash
+cd phase_3 && source ../venv/bin/activate && python train.py
+```
+
+**2. Start the server**
+
+```bash
+cd phase_5 && source ../venv/bin/activate && uvicorn api:app --port 8000
+```
+
+Startup takes ~20 seconds to load embeddings, features, and the model. You'll see `Ready.` when it's done.
+
+**3. Open in browser**
+
+```
+http://localhost:8000/recommend?user_id=1
+http://localhost:8000/similar?movie_id=1
+http://localhost:8000/docs        ← interactive UI to test both endpoints
+```
+
+---
+
+#### Endpoints
+
+**`GET /recommend?user_id=1`**
+
+Runs the full pipeline and returns top 10 with pipeline stats.
+
+```json
+{
+  "user_id": 1,
+  "pipeline": {
+    "candidates_generated": 187,
+    "after_scoring": 187,
+    "after_filter": 187,
+    "final": 10
+  },
+  "recommendations": [
+    { "movie_id": 3751, "title": "Chicken Run (2000)", "genres": "Animation|Children's|Comedy", "score": 1.2706 },
+    { "movie_id": 364,  "title": "Lion King, The (1994)", "genres": "Animation|Children's|Musical", "score": 1.2441 },
+    ...
+  ]
+}
+```
+
+**`GET /similar?movie_id=1`**
+
+Finds movies with similar audience patterns using WALS embeddings.
+
+```json
+{
+  "query": { "movie_id": 1, "title": "Toy Story (1995)" },
+  "similar": [
+    { "movie_id": 3114, "title": "Toy Story 2 (1999)", "genres": "Animation|Children's|Comedy" },
+    { "movie_id": 34,   "title": "Babe (1995)", "genres": "Children's|Comedy|Drama" },
+    ...
+  ]
+}
+```
+
+---
+
+#### Key Takeaways
+
+**1. Load once, serve many.**
+All data — ratings, embeddings, features, model — loads at startup into `state.py`. Individual requests just read from memory. Without this, every request would reload 1M ratings from disk.
+
+**2. The pipeline metadata is the most useful debug tool.**
+The `pipeline` field shows how many candidates survived each stage. If recommendations look wrong, this is the first place to look — a stage cutting too aggressively is usually the culprit.
+
+**3. The `/similar` endpoint is the simplest path to value.**
+It needs no user history, just a movie ID. Pure embedding lookup — fast, interpretable, useful for "more like this" features on any item page.
+
+---
+
+**Course modules covered:** Full pipeline — Overview, Three-Stage Architecture
 
 ---
 
