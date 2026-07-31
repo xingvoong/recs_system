@@ -520,7 +520,7 @@ Force the top 10 to span at least 3 distinct genres. Greedy: fill the list top-t
 
 ---
 
-#### Key Takeaways
+#### Key Findings
 
 **1. Freshness changes rankings visibly.**
 Chicken Run (2000) jumped to #1 for user 1 over Fantasia (1940) even though Fantasia had a higher raw ML score. A 30% boost on a near-equal score is enough to flip the order. This is the intended behaviour — surface new content without destroying relevance.
