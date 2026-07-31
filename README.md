@@ -469,13 +469,74 @@ Users 1 and 500 both received animated children's movies as candidates. Their ge
 
 ---
 
-### Phase 4 — Re-ranking
-- Freshness score multiplier
-- Genre diversity constraint
-- Already-seen filter
-- Positional bias experiment: model with vs. without position as a feature
+### Phase 4 — Re-ranking ✓
 
-**Course modules covered:** 9
+The ML scorer ranks by predicted likelihood of being liked. That's a proxy metric. Re-ranking is where you enforce what you actually want but can't measure with a loss function.
+
+**What we built:**
+
+| File | What it does |
+|---|---|
+| `phase_4/rerank.py` | Three re-ranking steps: filter, freshness boost, diversity |
+| `phase_4/pipeline.py` | Full end-to-end pipeline wiring all four phases together |
+
+---
+
+#### The Three Steps
+
+**1. Already-seen filter**
+
+Remove any movie the user has already rated. The scorer has no memory — without this step it recommends movies the user watched years ago.
+
+**2. Freshness boost**
+
+Multiply each score by a weight based on release year. Keeps classics reachable but surfaces newer content first.
+
+```
+Year    Multiplier
+1930    0.78x
+1970    1.08x
+1995    1.26x
+2000    1.30x
+```
+
+**3. Diversity constraint**
+
+Force the top 10 to span at least 3 distinct genres. Greedy: fill the list top-to-bottom, then swap in candidates that add new genres if the target isn't met.
+
+---
+
+#### End-to-End Pipeline Results
+
+```
+187 candidates → 187 scored → 10 final
+```
+
+| User | Genres in top 10 | #1 Result |
+|---|---|---|
+| User 1 | Animation, Children's, Comedy, Drama, Musical, Romance, Thriller | Chicken Run (2000) |
+| User 100 | Action, Adventure, Comedy, Crime, Drama, Romance, Sci-Fi, Thriller, War, Western | Mask of Zorro (1998) |
+| User 500 | Adventure, Animation, Children's, Comedy, Drama, Musical, Romance, Thriller | Toy Story 2 (1999) |
+
+---
+
+#### Key Takeaways
+
+**1. Freshness changes rankings visibly.**
+Chicken Run (2000) jumped to #1 for user 1 over Fantasia (1940) even though Fantasia had a higher raw ML score. A 30% boost on a near-equal score is enough to flip the order. This is the intended behaviour — surface new content without destroying relevance.
+
+**2. Diversity rescued off-genre movies.**
+Shawshank Redemption and Silence of the Lambs appeared in user 1's top 10 despite being Drama/Thriller in a list dominated by Animation. Collaborative filtering brought them in as candidates; diversity kept them. Without the diversity step, both would have been pushed out by higher-scoring animated films.
+
+**3. Pure ML scores optimise the wrong thing.**
+The scorer maximises predicted rating probability. Left unchecked, it returns 10 near-identical movies — all high-probability, all the same genre. Re-ranking is the correction layer that makes the output feel like a product instead of a ranked spreadsheet.
+
+**4. Business logic belongs here, not in the model.**
+Freshness, diversity, and content filters are explicit rules — not learned. That's deliberate. You want to be able to change them without retraining. Re-ranking is the seam between ML outputs and product decisions.
+
+---
+
+**Course modules covered:** Re-ranking
 
 ---
 
