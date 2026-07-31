@@ -636,6 +636,30 @@ It needs no user history, just a movie ID. Pure embedding lookup — fast, inter
 
 ---
 
+---
+
+## Project Takeaways
+
+**Recommendation is a filtering problem, not a ranking problem.**
+You can't rank 3,706 movies with an expensive model on every request. The entire architecture exists to throw away candidates as cheaply as possible — so the heavy computation only runs on a small fraction of the corpus. This insight drives every design decision from Phase 1 to Phase 5.
+
+**The three stages solve three different problems.**
+Candidate generation solves recall — make sure the right movies are even in the pool. Scoring solves precision — rank those candidates correctly. Re-ranking solves product quality — make the final list feel good to a human. Confusing these three concerns leads to bad systems.
+
+**Two generators beat one.**
+Content-based and collaborative filtering have opposite failure modes. Content-based can't discover anything the user hasn't already shown interest in. Collaborative can't handle new items with no ratings. Running both and pooling their outputs means neither blind spot kills the recommendations.
+
+**The feedback matrix is 95.5% empty — and that emptiness is the whole problem.**
+Every algorithm in this project — WALS, negative sampling, collaborative filtering — exists because of that 4.47% density. If users rated everything, recommendation would be trivial. The sparsity is not an obstacle to work around; it's the defining characteristic of the problem.
+
+**ML scores and product quality are different things.**
+A scorer that optimises click probability will return 10 near-identical high-probability movies. AUC 0.94 on a test set does not mean users will be happy. Re-ranking exists because the gap between "what the model measures" and "what users experience" is real and significant.
+
+**Business logic belongs outside the model.**
+Freshness, diversity, and content filters change frequently. Baking them into training data means retraining every time a product decision changes. Keeping them as explicit post-processing rules means changing one line of code. The seam between Phase 3 and Phase 4 is deliberate.
+
+---
+
 ### Stretch Goals
 - Two-tower model for candidate generation (handles cold-start)
 - WALS vs. SGD training comparison
