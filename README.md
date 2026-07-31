@@ -373,13 +373,99 @@ A new movie with zero ratings has no WALS embedding, so collaborative filtering 
 
 ---
 
-### Phase 3 — Scoring DNN
-- Softmax DNN with user + item features
-- Embedding lookup layers for sparse features
-- Negative sampling during training
-- Evaluate on holdout ratings
+### Phase 3 — Scoring DNN ✓
 
-**Course modules covered:** 6, 8
+Takes the ~190 candidates from Phase 2 and ranks them using a trained neural network with richer features than dot product alone.
+
+**What we built:**
+
+| File | What it does |
+|---|---|
+| `phase_3/features.py` | Vectorized feature builder — 20-dim user vectors + 20-dim item vectors |
+| `phase_3/train.py` | Trains MLP with negative sampling, saves model to `data/scorer.pkl` |
+| `phase_3/score.py` | Full pipeline: candidate pool → scorer → ranked top 10 per user |
+
+---
+
+#### Input Features
+
+Each (user, movie) pair is represented as a 40-dim vector fed into the network.
+
+**User side (20 dims):**
+
+| Feature | Description |
+|---|---|
+| `avg_rating` | How generous this user rates — normalised to [0,1] |
+| `activity` | Log-scaled count of ratings given |
+| `genre_profile` | 18-dim weighted average of genres they've rated |
+
+**Item side (20 dims):**
+
+| Feature | Description |
+|---|---|
+| `year` | Release year normalised to [0,1] |
+| `popularity` | Log-scaled number of ratings the movie has received |
+| `genre_vector` | 18-dim binary genre flags |
+
+---
+
+#### Negative Sampling
+
+The matrix is 95.5% empty. Most unrated movies aren't disliked — they're just unseen. Training on all unrated pairs as negatives would destroy the signal.
+
+Instead:
+- **Positives** — ratings ≥ 4 (user liked it)
+- **Negatives** — 4 randomly sampled unseen movies per positive
+
+```
+Total training examples : 2,861,652
+Positives               :   575,281  (20%)
+Negatives               : 2,286,371  (80%)
+Train / Test split      : 80 / 20
+```
+
+---
+
+#### Training Results
+
+```
+Architecture  :  MLP  128 → 64 → 32 → 1  (ReLU activations)
+Loss iter 1   :  0.276
+Loss iter 30  :  0.243
+Test AUC      :  0.9386
+```
+
+AUC 0.94 — given a random liked movie and a random unseen movie, the model ranks the liked one higher 94% of the time.
+
+---
+
+#### Scored Output
+
+| User | Top Recommendation | Score |
+|---|---|---|
+| User 1 | Fantasia — Animation, Musical | 0.996 |
+| User 100 | Ben-Hur — Action, Adventure, Drama | 0.974 |
+| User 500 | Lady and the Tramp — Animation, Musical | 0.986 |
+
+---
+
+#### Key Findings
+
+**1. Features carry more signal than model depth.**
+A 3-layer MLP on 40 hand-crafted features hit AUC 0.94. The genre profile and average rating do the heavy lifting. The network learns to combine them — it doesn't invent signal that isn't there.
+
+**2. Negative sampling ratio shapes what the model learns.**
+4:1 negatives-to-positives forces the model to see enough "wrong" examples to become discriminative. Too few negatives and it just predicts positive for everything. Too many and positives get drowned out.
+
+**3. The scorer separates users who look identical at the candidate stage.**
+Users 1 and 500 both received animated children's movies as candidates. Their genre profiles differed enough that the scorer ranked different films first — Fantasia vs. Lady and the Tramp. The pool sets the ceiling. Scoring sets the order.
+
+**4. AUC doesn't measure what users experience.**
+0.94 AUC means good ranking on historical ratings. It says nothing about diversity, freshness, or whether the top 10 feels repetitive. That's Phase 4's job.
+
+---
+
+**Course modules covered:** DNNs for Recommendation, Scoring
 
 ---
 
