@@ -196,6 +196,22 @@ python evaluate.py
 
 ---
 
+## Key Takeaways
+
+**WALS is more accurate, but brittle.** Recall@100 of 0.28 vs two-tower's 0.058 on existing users. It memorised the interaction matrix directly — hard to beat at retrieval when the user is known.
+
+**Two-tower trades accuracy for generalization.** It learns a function from features to embeddings, not a lookup table. That means it can serve any user with a feature vector, even one with zero ratings. WALS can't do that at all.
+
+**Cold-start is the deciding factor.** If your product has no new users, WALS is probably fine. If you're onboarding users constantly — or launching new items — WALS leaves them stranded. Two-tower doesn't.
+
+**Feature engineering is the hard part.** The model is only as good as the features you feed it. User genre profile and item genre vector are a start, but they're sparse. Real systems add session signals, content embeddings, demographic features, and recency — anything that captures preference without requiring historical interactions.
+
+**Embedding collapse is a real failure mode.** With triplet loss, the item embeddings converged to a tight cluster (mean pairwise similarity 0.78). That kills genre discrimination. Production systems use InfoNCE loss or hard negative mining to keep embeddings spread out.
+
+**The architecture scales.** The inference path — one user tower forward pass + KNN over pre-computed item embeddings — is the same whether you have 4,000 items or 4 million. Swap sklearn KNN for FAISS and the latency barely changes.
+
+---
+
 ## Results
 
 ### Recall@K: WALS vs Two-Tower
