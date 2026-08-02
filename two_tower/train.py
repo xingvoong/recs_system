@@ -345,7 +345,7 @@ if __name__ == "__main__":
                           wrap=True)
 
     plt.tight_layout(rect=[0.05, 0, 0.88, 0.96])
-    plt.savefig("../data/two_tower_comparison.png", dpi=150, bbox_inches="tight")
+    plt.savefig("images/two_tower_comparison.png", dpi=150, bbox_inches="tight")
     print("Saved to data/two_tower_comparison.png")
 
     # ── Loss curve (separate small figure) ─────────────────────────────────
@@ -356,5 +356,5 @@ if __name__ == "__main__":
     ax2.set_title("Two-Tower Training — Loss Curve")
     ax2.grid(True, alpha=0.3)
     plt.tight_layout()
-    plt.savefig("../data/two_tower_loss.png", dpi=150)
+    plt.savefig("images/two_tower_loss.png", dpi=150)
     print("Saved to data/two_tower_loss.png")

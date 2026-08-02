@@ -206,5 +206,5 @@ if __name__ == "__main__":
             transform=ax.transAxes, ha="center", fontsize=8, color="grey")
 
     plt.tight_layout()
-    plt.savefig("../data/two_tower_untrained.png", dpi=150, bbox_inches="tight")
+    plt.savefig("images/two_tower_untrained.png", dpi=150, bbox_inches="tight")
     print("\nSaved visualization to data/two_tower_untrained.png")

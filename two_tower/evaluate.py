@@ -167,7 +167,7 @@ if __name__ == "__main__":
     ax.grid(axis="y", alpha=0.3)
 
     plt.tight_layout()
-    plt.savefig("../data/two_tower_recall.png", dpi=150)
+    plt.savefig("images/two_tower_recall.png", dpi=150)
     print("\nSaved to data/two_tower_recall.png")
 
     # ── Interpretation ─────────────────────────────────────────────────────

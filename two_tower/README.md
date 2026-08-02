@@ -212,7 +212,7 @@ Evaluated on 500 users, holding out 20% of their liked movies and checking wheth
 
 **Two-tower is weaker here, but that's not the full story.** WALS has zero Recall for any user not in the training set. Two-tower serves every user with a feature vector — including brand-new ones with zero ratings. The chart below shows the head-to-head on existing users only:
 
-![Recall comparison](../data/two_tower_recall.png)
+![Recall comparison](images/two_tower_recall.png)
 
 ---
 
@@ -222,7 +222,7 @@ Evaluated on 500 users, holding out 20% of their liked movies and checking wheth
 
 A 3×2 comparison showing what changes when the towers learn:
 
-![Before vs After](../data/two_tower_comparison.png)
+![Before vs After](images/two_tower_comparison.png)
 
 **Row 1 — Positive vs Negative similarity:**
 Green = liked items, red = random negatives. Before training both distributions overlap near 0 — the model scores liked and random movies identically. After training the green peak shifts right, red shifts left. The gap is the learned signal.
